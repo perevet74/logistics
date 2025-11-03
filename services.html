@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services - JP Logistics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="flex">
+        <!-- Desktop Sidebar Navigation -->
+        <nav class="desktop-nav hidden md:block fixed left-0 top-0 h-full bg-gray-800 shadow-lg w-20 hover:w-56 z-30 group">
+            <ul class="flex flex-col h-full py-4 space-y-2">
+                <li class="px-5 py-3 mb-4">
+                    <a href="index.html" class="flex items-center space-x-2">
+                        <svg class="h-10 w-10 text-indigo-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z"/></svg>
+                        <span class="nav-text text-xl font-extrabold text-white whitespace-nowrap">JP Logistics</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="index.html" class="flex items-center py-3 px-6 text-gray-300 hover:bg-indigo-600 hover:text-white rounded-r-full transition-colors duration-200">
+                        <i data-feather="home" class="h-6 w-6 flex-shrink-0"></i>
+                        <span class="nav-text ml-4 font-semibold whitespace-nowrap">Home</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center py-3 px-6 text-indigo-400 bg-gray-900">
+                        <i data-feather="grid" class="h-6 w-6 flex-shrink-0"></i>
+                        <span class="nav-text ml-4 font-semibold whitespace-nowrap">Services</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="insurance.html" class="flex items-center py-3 px-6 text-gray-300 hover:bg-indigo-600 hover:text-white rounded-r-full transition-colors duration-200">
+                        <i data-feather="shield" class="h-6 w-6 flex-shrink-0"></i>
+                        <span class="nav-text ml-4 font-semibold whitespace-nowrap">Insurance & Refunds</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="about.html" class="flex items-center py-3 px-6 text-gray-300 hover:bg-indigo-600 hover:text-white rounded-r-full transition-colors duration-200">
+                        <i data-feather="info" class="h-6 w-6 flex-shrink-0"></i>
+                        <span class="nav-text ml-4 font-semibold whitespace-nowrap">About</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="contact.html" class="flex items-center py-3 px-6 text-gray-300 hover:bg-indigo-600 hover:text-white rounded-r-full transition-colors duration-200">
+                        <i data-feather="phone" class="h-6 w-6 flex-shrink-0"></i>
+                        <span class="nav-text ml-4 font-semibold whitespace-nowrap">Contact</span>
+                    </a>
+                </li>
+                <li class="mt-auto">
+                    <a href="tracking.html" class="flex items-center py-3 px-6 text-gray-300 hover:bg-indigo-600 hover:text-white rounded-r-full transition-colors duration-200">
+                        <i data-feather="compass" class="h-6 w-6 flex-shrink-0"></i>
+                        <span class="nav-text ml-4 font-semibold whitespace-nowrap">Track Shipment</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div id="app-content" class="w-full md:pl-20">
+            <!-- Mobile Header -->
+            <header class="md:hidden bg-gray-800/80 backdrop-blur-sm sticky top-0 z-10">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-4">
+                        <div class="flex items-center space-x-2">
+                            <svg class="h-8 w-8 text-indigo-400" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z"/></svg>
+                            <span class="text-xl font-extrabold text-white">JP Logistics</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main>
+                <!-- Page Header -->
+                <section class="page-header-bg min-h-[40vh] flex items-end py-16" style="background-image: url('https://placehold.co/1920x800/111827/374151?text=Our+Services');">
+                    <div class="page-header-content container mx-auto px-4 sm:px-6 lg:px-8">
+                        <h1 class="text-4xl md:text-5xl font-extrabold text-white">Our Services</h1>
+                        <p class="mt-2 text-lg text-text-secondary max-w-2xl">Comprehensive logistics solutions tailored to your business needs.</p>
+                    </div>
+                </section>
+
+                <!-- Core Services (original content preserved) -->
+                <section class="py-16 md:py-24">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="grid grid-cols-1 gap-12">
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                                <div class="card rounded-2xl overflow-hidden">
+                                    <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&auto=format&fit=crop" alt="Air Freight" class="w-full h-64 object-cover">
+                                </div>
+                                <div class="card rounded-2xl p-6">
+                                    <h2 class="text-2xl font-bold text-white mb-2">Air Freight</h2>
+                                    <p class="text-text-secondary text-sm mb-4">When time is critical, our global air freight services provide the speed and reliability you need. We offer comprehensive air freight solutions that ensure your cargo reaches its destination quickly and securely.</p>
+                                    <ul class="text-text-secondary text-sm list-disc pl-5 space-y-1">
+                                        <li>Express delivery options</li>
+                                        <li>Global coverage</li>
+                                        <li>Real-time tracking</li>
+                                        <li>Temperature-controlled shipments</li>
+                                        <li>Dangerous goods handling</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                                <div class="card rounded-2xl overflow-hidden lg:order-2">
+                                    <img src="https://cdn.businessday.ng/2020/07/sea-freight.jpg" alt="Ocean Freight" class="w-full h-64 object-cover">
+                                </div>
+                                <div class="card rounded-2xl p-6 lg:order-1">
+                                    <h2 class="text-2xl font-bold text-white mb-2">Ocean Freight</h2>
+                                    <p class="text-text-secondary text-sm mb-4">Cost-effective and comprehensive ocean freight solutions for your large-scale shipments. We provide seamless FCL and LCL services to destinations worldwide.</p>
+                                    <ul class="text-text-secondary text-sm list-disc pl-5 space-y-1">
+                                        <li>FCL and LCL options</li>
+                                        <li>Container tracking</li>
+                                        <li>Port-to-port service</li>
+                                        <li>Documentation assistance</li>
+                                        <li>Custom clearance support</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                                <div class="card rounded-2xl overflow-hidden">
+                                    <img src="https://www.seaspace-int.com/wp-content/uploads/2021/02/Warehouse-and-Storage-Facilities.png" alt="Warehousing" class="w-full h-64 object-cover">
+                                </div>
+                                <div class="card rounded-2xl p-6">
+                                    <h2 class="text-2xl font-bold text-white mb-2">Warehousing</h2>
+                                    <p class="text-text-secondary text-sm mb-4">Secure, scalable, and strategically located warehousing to optimize your inventory management. Our facilities are equipped with the latest technology for maximum efficiency.</p>
+                                    <ul class="text-text-secondary text-sm list-disc pl-5 space-y-1">
+                                        <li>State-of-the-art facilities</li>
+                                        <li>Inventory management systems</li>
+                                        <li>Pick and pack services</li>
+                                        <li>Cross-docking capabilities</li>
+                                        <li>Value-added services</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Additional Services (original items preserved) -->
+                <section class="py-16 md:py-24 bg-gray-800">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="text-center max-w-3xl mx-auto mb-12">
+                            <h2 class="text-3xl md:text-4xl font-bold text-white">Additional Services</h2>
+                            <p class="mt-4 text-text-secondary">Enhance your supply chain with our specialized value-added services.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <div class="card rounded-2xl p-6 text-left">
+                                <div class="w-14 h-14 bg-indigo-600 rounded-xl flex items-center justify-center mb-4">
+                                    <i data-feather="file-text" class="h-7 w-7 text-white"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2">Custom Clearance</h3>
+                                <p class="text-text-secondary text-sm">Expert handling of customs documentation and clearance procedures to ensure smooth border crossings.</p>
+                            </div>
+                            <div class="card rounded-2xl p-6 text-left">
+                                <div class="w-14 h-14 bg-indigo-600 rounded-xl flex items-center justify-center mb-4">
+                                    <i data-feather="shield" class="h-7 w-7 text-white"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2">Cargo Insurance</h3>
+                                <p class="text-text-secondary text-sm">Comprehensive insurance coverage to protect your shipments against loss and damage.</p>
+                            </div>
+                            <div class="card rounded-2xl p-6 text-left">
+                                <div class="w-14 h-14 bg-indigo-600 rounded-xl flex items-center justify-center mb-4">
+                                    <i data-feather="truck" class="h-7 w-7 text-white"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2">Distribution</h3>
+                                <p class="text-text-secondary text-sm">Last-mile delivery solutions and distribution networks for complete supply chain management.</p>
+                            </div>
+                            <div class="card rounded-2xl p-6 text-left">
+                                <div class="w-14 h-14 bg-indigo-600 rounded-xl flex items-center justify-center mb-4">
+                                    <i data-feather="target" class="h-7 w-7 text-white"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-2">Supply Chain Consulting</h3>
+                                <p class="text-text-secondary text-sm">Expert consulting services to optimize your supply chain and reduce operational costs.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CTA Section -->
+                <section class="py-20">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="bg-indigo-600 rounded-2xl p-10 text-center shadow-2xl shadow-indigo-500/30">
+                            <h2 class="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
+                            <p class="text-indigo-200 max-w-2xl mx-auto mb-8">Talk with our team to tailor a logistics solution that fits your operations.</p>
+                            <a href="contact.html" class="bg-white text-indigo-600 font-semibold px-8 py-4 rounded-xl hover:bg-gray-200 transition-colors duration-300">Get a Free Quote</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Footer -->
+                <footer class="bg-gray-800 border-t border-gray-700">
+                    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                            <div>
+                                <h4 class="font-bold text-white mb-4">JP Logistics</h4>
+                                <p class="text-sm text-text-secondary">Your trusted partner in global logistics. Delivering excellence, one shipment at a time.</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white mb-4">Quick Links</h4>
+                                <ul class="space-y-2 text-sm">
+                                    <li><a href="about.html" class="text-text-secondary hover:text-white">About Us</a></li>
+                                    <li><a href="services.html" class="text-text-secondary hover:text-white">Services</a></li>
+                                    <li><a href="tracking.html" class="text-text-secondary hover:text-white">Track Shipment</a></li>
+                                    <li><a href="contact.html" class="text-text-secondary hover:text-white">Contact Us</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white mb-4">Contact Info</h4>
+                                <ul class="space-y-2 text-sm text-text-secondary">
+                                    <li class="flex items-start"><i data-feather="map-pin" class="h-4 w-4 mr-2 mt-1"></i><span>4545 Jimmy Doolittle Dr. Suite 100 Addison, TX 75001
+Houston United States</span></li>
+                                    <li class="flex items-center"><i data-feather="phone" class="h-4 w-4 mr-2"></i><span>+12148074712</span></li>
+                                    <li class="flex items-center"><i data-feather="mail" class="h-4 w-4 mr-2"></i><span>info@jpeglogistics.cc</span></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white mb-4">Follow Us</h4>
+                                <div class="flex space-x-4">
+                                    <a href="#" class="text-text-secondary hover:text-white"><i data-feather="twitter"></i></a>
+                                    <a href="#" class="text-text-secondary hover:text-white"><i data-feather="facebook"></i></a>
+                                    <a href="#" class="text-text-secondary hover:text-white"><i data-feather="linkedin"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 pt-8 border-t border-gray-700 text-center text-sm text-text-secondary">
+                            <p>&copy; 2025 JP Logistic. All Rights Reserved.</p>
+                        </div>
+                    </div>
+                </footer>
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Floating Action Button Menu -->
+    <div class="fixed md:hidden bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-4 z-20">
+        <div class="relative flex items-center justify-center">
+            <div id="fab-menu-items" class="fab-menu-items absolute bottom-0 flex justify-center items-end gap-4 mb-20 opacity-0 transform scale-90 pointer-events-none">
+                <a href="index.html" class="fab-menu-item flex flex-col items-center text-text-secondary hover:text-white transition-all transform hover:-translate-y-1" style="transition-delay: 0.2s">
+                    <div class="bg-white rounded-full p-3 shadow-lg"><i data-feather="home" class="h-6 w-6 text-indigo-600"></i></div>
+                    <span class="text-xs font-semibold mt-1">Home</span>
+                </a>
+                <a href="#" class="fab-menu-item flex flex-col items-center text-text-secondary hover:text-white transition-all transform hover:-translate-y-1" style="transition-delay: 0.1s">
+                    <div class="bg-white rounded-full p-3 shadow-lg"><i data-feather="grid" class="h-6 w-6 text-indigo-600"></i></div>
+                    <span class="text-xs font-semibold mt-1">Services</span>
+                </a>
+                <a href="insurance.html" class="fab-menu-item flex flex-col items-center text-text-secondary hover:text-white transition-all transform hover:-translate-y-1" style="transition-delay: 0.1s">
+                    <div class="bg-white rounded-full p-3 shadow-lg"><i data-feather="shield" class="h-6 w-6 text-indigo-600"></i></div>
+                    <span class="text-xs font-semibold mt-1">Insurance</span>
+                </a>
+                <a href="about.html" class="fab-menu-item flex flex-col items-center text-text-secondary hover:text-white transition-all transform hover:-translate-y-1" style="transition-delay: 0.1s">
+                    <div class="bg-white rounded-full p-3 shadow-lg"><i data-feather="info" class="h-6 w-6 text-indigo-600"></i></div>
+                    <span class="text-xs font-semibold mt-1">About</span>
+                </a>
+                <a href="contact.html" class="fab-menu-item flex flex-col items-center text-text-secondary hover:text-white transition-all transform hover:-translate-y-1" style="transition-delay: 0.2s">
+                    <div class="bg-white rounded-full p-3 shadow-lg"><i data-feather="phone" class="h-6 w-6 text-indigo-600"></i></div>
+                    <span class="text-xs font-semibold mt-1">Contact</span>
+                </a>
+            </div>
+            <button id="fab-menu-button" class="fab-menu-button relative bg-indigo-600 text-white rounded-full h-16 w-16 flex items-center justify-center shadow-xl hover:shadow-2xl hover:shadow-indigo-500/50 hover:bg-indigo-700">
+                <i data-feather="plus" class="h-8 w-8 transition-transform duration-300"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <!-- Live Chat (Zoho SalesIQ) -->
+    <script>window.$zoho=window.$zoho || {};$zoho.salesiq=$zoho.salesiq||{ready:function(){}}</script><script id="zsiqscript" src="https://salesiq.zohopublic.com/widget?wc=siq70a2bf9b4d9b2eb4ff8fa7b0048c0b29d933feb4ba31cf23959e93b4610af182" defer></script>
+</body>
+</html>
+

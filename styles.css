@@ -1,0 +1,100 @@
+:root {
+    --bg-dark-primary: #111827;
+    --bg-dark-secondary: #1F2937;
+    --accent-primary: #4F46E5;
+    --accent-secondary: #6366F1;
+    --text-primary: #F3F4F6;
+    --text-secondary: #9CA3AF;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-dark-primary);
+    color: var(--text-primary);
+}
+
+.card {
+    background-color: var(--bg-dark-secondary);
+    border: 1px solid #374151;
+}
+
+.desktop-nav {
+    transition: width 0.3s ease;
+}
+
+.desktop-nav .nav-text {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.desktop-nav:hover .nav-text {
+    opacity: 1;
+}
+
+.fab-menu-button {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
+}
+
+.fab-menu-button.active {
+    transform: rotate(45deg);
+}
+
+.fab-menu-items {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    transform-origin: bottom center;
+}
+
+.fab-menu-item {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.hero-bg {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(17, 24, 39, 0.7);
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.page-header-bg {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+}
+
+.page-header-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(17, 24, 39, 1), rgba(17, 24, 39, 0.6));
+    z-index: 1;
+}
+
+.page-header-content {
+    position: relative;
+    z-index: 2;
+}
+
+.form-input {
+    background-color: #374151;
+    border: 1px solid #4B5563;
+    color: var(--text-primary);
+}
+
+.form-input:focus {
+    background-color: var(--bg-dark-secondary);
+    border-color: var(--accent-secondary);
+    ring: 0;
+    outline: none;
+}
