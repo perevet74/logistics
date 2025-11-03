@@ -149,8 +149,7 @@ if (statsSection) {
         const tbody = document.getElementById('shipments-tbody');
         const summary = document.getElementById('table-summary');
         if (!tbody || !summary) return;
-
-        const all = readStore();
+        const all = (state.runtimeShipments && Array.isArray(state.runtimeShipments)) ? state.runtimeShipments : readStore();
 
         const q = (state.search || '').trim().toLowerCase();
         const statusFilter = state.status || '';
@@ -309,7 +308,7 @@ if (statsSection) {
         try { document.documentElement.style.overflow = ''; } catch(_) {}
     }
 
-    function upsertFromForm() {
+    async function upsertFromForm() {
         // Handle image upload first if present
         const imageInput = document.getElementById('featured-image');
         const hasImage = imageInput && imageInput.files && imageInput.files[0];
@@ -381,7 +380,8 @@ if (statsSection) {
                 return;
             }
 
-            const store = readStore();
+            const usingFirebase = !!(window.DB && DB.hasFirebaseConfig);
+            const store = usingFirebase ? (stateCache.runtimeShipments || []) : readStore();
             const now = Date.now();
             let isNew = false;
             let oldStatus = null;
@@ -395,16 +395,17 @@ if (statsSection) {
             const featuredImage = imageBase64;
             
             if (id) {
-                const idx = store.findIndex(s => s.id === id);
-                if (idx >= 0) {
-                    oldStatus = store[idx].status;
-                    const existingImage = store[idx].featuredImage;
-                    store[idx] = { 
-                        ...store[idx], 
-                        trackingNo, 
-                        sender, 
-                        receiver, 
-                        status, 
+                const existing = store.find(s => s.id === id);
+                if (existing) {
+                    oldStatus = existing.status;
+                }
+                if (usingFirebase && window.DB) {
+                    DB.updateShipment(id, {
+                        id,
+                        trackingNo,
+                        sender,
+                        receiver,
+                        status,
                         cargoType,
                         statusDate,
                         statusTime,
@@ -413,21 +414,47 @@ if (statsSection) {
                         departureDate,
                         departureTime,
                         comments,
-                        origin, 
-                        destination, 
+                        origin,
+                        destination,
                         notes,
-                        featuredImage: featuredImage || existingImage || null,
-                        updatedAt: now 
-                    };
+                        featuredImage: featuredImage || (existing && existing.featuredImage) || null,
+                        createdAt: existing ? existing.createdAt : now
+                    }).catch(() => { alert('Failed to update shipment.'); });
+                } else {
+                    const idx = store.findIndex(s => s.id === id);
+                    if (idx >= 0) {
+                        const existingImage = store[idx].featuredImage;
+                        store[idx] = {
+                            ...store[idx],
+                            trackingNo,
+                            sender,
+                            receiver,
+                            status,
+                            cargoType,
+                            statusDate,
+                            statusTime,
+                            location,
+                            carrierRef,
+                            departureDate,
+                            departureTime,
+                            comments,
+                            origin,
+                            destination,
+                            notes,
+                            featuredImage: featuredImage || existingImage || null,
+                            updatedAt: now
+                        };
+                        writeStore(store);
+                    }
                 }
             } else {
                 isNew = true;
-                store.unshift({ 
-                    id: generateId(), 
-                    trackingNo, 
-                    sender, 
-                    receiver, 
-                    status, 
+                const newRecord = {
+                    id: generateId(),
+                    trackingNo,
+                    sender,
+                    receiver,
+                    status,
                     cargoType,
                     statusDate,
                     statusTime,
@@ -436,15 +463,20 @@ if (statsSection) {
                     departureDate,
                     departureTime,
                     comments,
-                    origin, 
-                    destination, 
+                    origin,
+                    destination,
                     notes,
                     featuredImage: featuredImage || null,
-                    createdAt: now, 
-                    updatedAt: now 
-                });
+                    createdAt: now,
+                    updatedAt: now
+                };
+                if (usingFirebase && window.DB) {
+                    DB.createShipment(newRecord).catch(() => { alert('Failed to create shipment.'); });
+                } else {
+                    const next = [newRecord, ...store];
+                    writeStore(next);
+                }
             }
-            writeStore(store);
 
             // Close modal and refresh table after save
             closeModal();
@@ -457,7 +489,8 @@ if (statsSection) {
                 search: searchInput ? searchInput.value : '',
                 status: statusFilter ? statusFilter.value : '',
                 sort: sortSelect ? sortSelect.value : 'updatedAt:desc',
-                page: 0
+                page: 0,
+                runtimeShipments: stateCache.runtimeShipments || null
             };
             renderTable(currentState);
             
@@ -491,7 +524,8 @@ if (statsSection) {
     }
 
     function exportJSON() {
-        const data = readStore();
+        const usingFirebase = !!(window.DB && DB.hasFirebaseConfig);
+        const data = usingFirebase && stateCache.runtimeShipments ? stateCache.runtimeShipments : readStore();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -509,8 +543,30 @@ if (statsSection) {
             try {
                 const arr = JSON.parse(reader.result);
                 if (Array.isArray(arr)) {
-                    writeStore(arr);
-                    onDone(true);
+                    const usingFirebase = !!(window.DB && DB.hasFirebaseConfig);
+                    if (usingFirebase) {
+                        try {
+                            const initRes = DB.init();
+                            if (!initRes.ready) {
+                                writeStore(arr);
+                                onDone(true);
+                                return;
+                            }
+                        } catch (_) {}
+                        const ops = arr.map((item) => {
+                            const data = { ...item };
+                            const id = data.id;
+                            delete data.id;
+                            if (id) {
+                                return DB.updateShipment(id, { ...data, id }).catch(() => {});
+                            }
+                            return DB.createShipment(data).catch(() => {});
+                        });
+                        Promise.all(ops).then(() => onDone(true)).catch(() => onDone(false));
+                    } else {
+                        writeStore(arr);
+                        onDone(true);
+                    }
                 } else {
                     onDone(false);
                 }
@@ -593,14 +649,19 @@ if (statsSection) {
             const action = target.getAttribute('data-action');
             const id = target.getAttribute('data-id');
             if (!action || !id) return;
-            const store = readStore();
+            const usingFirebase = !!(window.DB && DB.hasFirebaseConfig);
+            const store = usingFirebase ? (stateCache.runtimeShipments || []) : readStore();
             const shipment = store.find(s => s.id === id);
             if (action === 'edit' && shipment) {
                 openModal(shipment);
             } else if (action === 'delete') {
-                const next = store.filter(s => s.id !== id);
-                writeStore(next);
-                renderTable(state);
+                if (usingFirebase && window.DB) {
+                    DB.deleteShipment(id).catch(() => { alert('Failed to delete shipment.'); });
+                } else {
+                    const next = store.filter(s => s.id !== id);
+                    writeStore(next);
+                    renderTable(state);
+                }
             }
         });
 
@@ -656,14 +717,70 @@ if (statsSection) {
         }
     }
 
+    const stateCache = { runtimeShipments: null };
+
     window.initAdminDashboard = function initAdminDashboard() {
         const isAdminPage = document.getElementById('admin-app');
         if (!isAdminPage) return;
         
-        seedIfEmpty();
-        const state = { search: '', status: '', sort: 'updatedAt:desc', page: 0 };
+        const useFirebase = !!(window.DB && DB.hasFirebaseConfig);
+        const state = { search: '', status: '', sort: 'updatedAt:desc', page: 0, runtimeShipments: null };
         bindEvents(state);
-        renderTable(state);
+
+        // Auth gate
+        const authGate = document.getElementById('auth-gate');
+        const authForm = document.getElementById('auth-form');
+        const authError = document.getElementById('auth-error');
+        if (useFirebase && window.DB) {
+            const initRes = DB.init();
+            if (!initRes.ready) {
+                // Fallback to local storage
+                seedIfEmpty();
+                renderTable(state);
+                return;
+            }
+            DB.onAuth(async (user) => {
+                const allowed = DB.isAllowedUser(user);
+                if (!user || !allowed) {
+                    if (authGate) authGate.classList.remove('hidden');
+                } else {
+                    if (authGate) authGate.classList.add('hidden');
+                }
+                if (user && allowed) {
+                    // Subscribe to realtime shipments
+                    if (stateCache.unsubscribe) stateCache.unsubscribe();
+                    stateCache.unsubscribe = DB.onShipmentsSnapshot((arr) => {
+                        stateCache.runtimeShipments = arr;
+                        const next = { ...state, runtimeShipments: arr };
+                        renderTable(next);
+                    });
+                } else {
+                    // No access -> clear
+                    stateCache.runtimeShipments = null;
+                    renderTable(state);
+                }
+            });
+            if (authForm) {
+                authForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('auth-email').value.trim();
+                    const pass = document.getElementById('auth-password').value;
+                    try {
+                        if (authError) authError.classList.add('hidden');
+                        await DB.signIn(email, pass);
+                    } catch (err) {
+                        if (authError) {
+                            authError.textContent = err.message || 'Sign-in failed';
+                            authError.classList.remove('hidden');
+                        }
+                    }
+                });
+            }
+        } else {
+            // Local-only fallback
+            seedIfEmpty();
+            renderTable(state);
+        }
     };
     
     // Also initialize immediately when script loads if DOM is ready
@@ -685,7 +802,17 @@ if (statsSection) {
     window.__forceOpenModal = function () { openModal(null); };
 
     // Tracking page logic
-    function findByTracking(trackingNo) {
+    async function findByTracking(trackingNo) {
+        const useFirebase = !!(window.DB && DB.hasFirebaseConfig);
+        if (useFirebase) {
+            try {
+                const initRes = DB.init();
+                if (initRes.ready) {
+                    const doc = await DB.findShipmentByTracking(trackingNo);
+                    return doc;
+                }
+            } catch (_) {}
+        }
         const all = readStore();
         return all.find(s => (s.trackingNo || '').toLowerCase() === trackingNo.toLowerCase());
     }
@@ -745,22 +872,28 @@ if (statsSection) {
         const input = document.getElementById('trackingNumber');
         const result = document.getElementById('trackingResult');
         if (!form || !input || !result) return;
-        seedIfEmpty();
+        // If no Firebase config, seed local store for demo
+        if (!(window.DB && DB.hasFirebaseConfig)) {
+            seedIfEmpty();
+        }
 
         // Support query param ?tn=...
         const params = new URLSearchParams(window.location.search);
         const tn = params.get('tn');
         if (tn) {
             input.value = tn;
-            renderTrackingResult(result, findByTracking(tn), tn);
+            Promise.resolve(findByTracking(tn)).then((doc) => {
+                renderTrackingResult(result, doc, tn);
+            });
         }
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const trackingNo = input.value.trim();
             if (!trackingNo) return;
-            const match = findByTracking(trackingNo);
-            renderTrackingResult(result, match, trackingNo);
+            Promise.resolve(findByTracking(trackingNo)).then((match) => {
+                renderTrackingResult(result, match, trackingNo);
+            });
         });
     }
 

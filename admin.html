@@ -8,9 +8,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
     <link rel="stylesheet" href="styles.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Config and DB helper -->
+    <script src="firebase-config.js"></script>
+    <script src="db.js"></script>
 </head>
 <body>
     <div class="flex" id="admin-app">
+        <!-- Auth Gate -->
+        <div id="auth-gate" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50 hidden">
+            <div class="card rounded-2xl p-6 w-full max-w-md">
+                <h2 class="text-xl font-bold text-white mb-4">Admin Sign In</h2>
+                <p class="text-text-secondary text-sm mb-4">Sign in to manage shipments.</p>
+                <form id="auth-form" class="grid gap-3">
+                    <input id="auth-email" type="email" placeholder="Email" class="form-input rounded-lg px-3 py-2" required />
+                    <input id="auth-password" type="password" placeholder="Password" class="form-input rounded-lg px-3 py-2" required />
+                    <button class="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700">Sign In</button>
+                    <p id="auth-error" class="text-red-400 text-sm hidden"></p>
+                </form>
+            </div>
+        </div>
         <!-- Desktop Sidebar Navigation -->
         <nav class="desktop-nav hidden md:block fixed left-0 top-0 h-full bg-gray-800 shadow-lg w-20 hover:w-56 z-30 group">
             <ul class="flex flex-col h-full py-4 space-y-2">
@@ -329,8 +349,7 @@
             }
         });
     </script>
-    <!-- Live Chat (Zoho SalesIQ) -->
-    <script>window.$zoho=window.$zoho || {};$zoho.salesiq=$zoho.salesiq||{ready:function(){}}</script><script id="zsiqscript" src="https://salesiq.zohopublic.com/widget?wc=siq70a2bf9b4d9b2eb4ff8fa7b0048c0b29d933feb4ba31cf23959e93b4610af182" defer></script>
+    
 </body>
 </html>
 
