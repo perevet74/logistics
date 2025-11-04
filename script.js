@@ -400,6 +400,7 @@ if (statsSection) {
                     oldStatus = existing.status;
                 }
                 if (usingFirebase && window.DB) {
+                    console.log('Updating shipment in Firestore:', id);
                     DB.updateShipment(id, {
                         id,
                         trackingNo,
@@ -419,7 +420,12 @@ if (statsSection) {
                         notes,
                         featuredImage: featuredImage || (existing && existing.featuredImage) || null,
                         createdAt: existing ? existing.createdAt : now
-                    }).catch(() => { alert('Failed to update shipment.'); });
+                    }).then(() => {
+                        console.log('Shipment updated successfully in Firestore');
+                    }).catch((err) => {
+                        console.error('Failed to update shipment:', err);
+                        alert('Failed to update shipment: ' + (err.message || 'Unknown error'));
+                    });
                 } else {
                     const idx = store.findIndex(s => s.id === id);
                     if (idx >= 0) {
@@ -471,7 +477,13 @@ if (statsSection) {
                     updatedAt: now
                 };
                 if (usingFirebase && window.DB) {
-                    DB.createShipment(newRecord).catch(() => { alert('Failed to create shipment.'); });
+                    console.log('Creating shipment in Firestore:', newRecord.trackingNo);
+                    DB.createShipment(newRecord).then(() => {
+                        console.log('Shipment created successfully in Firestore');
+                    }).catch((err) => {
+                        console.error('Failed to create shipment:', err);
+                        alert('Failed to create shipment: ' + (err.message || 'Unknown error'));
+                    });
                 } else {
                     const next = [newRecord, ...store];
                     writeStore(next);
@@ -754,7 +766,9 @@ if (statsSection) {
                 if (user && allowed) {
                     // Subscribe to realtime shipments
                     if (stateCache.unsubscribe) stateCache.unsubscribe();
+                    console.log('Setting up real-time listener for shipments...');
                     stateCache.unsubscribe = DB.onShipmentsSnapshot((arr) => {
+                        console.log('Received shipments from Firestore:', arr.length);
                         stateCache.runtimeShipments = arr;
                         const next = { ...state, runtimeShipments: arr };
                         renderTable(next);

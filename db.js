@@ -80,6 +80,9 @@
                 const arr = [];
                 snap.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
                 cb(arr);
+            }, (error) => {
+                console.error('Firestore snapshot error:', error);
+                alert('Error loading shipments: ' + error.message);
             });
     }
 
