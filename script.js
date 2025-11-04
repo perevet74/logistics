@@ -120,7 +120,7 @@ if (statsSection) {
         return `${baseUrl}/tracking.html?tn=${encodeURIComponent(trackingNo)}`;
     }
 
-    function sendStatusEmail(senderEmail, receiverEmail, trackingNo, status, location, statusDate, statusTime, remarks, isNew) {
+    async function sendStatusEmail(senderEmail, receiverEmail, trackingNo, status, location, statusDate, statusTime, remarks, isNew) {
         const trackingLink = getTrackingLink(trackingNo);
         const dateTime = new Date(`${statusDate} ${statusTime}`).toLocaleString();
         
@@ -128,14 +128,71 @@ if (statsSection) {
             ? `Your JP Logistics shipment has been created: ${trackingNo}`
             : `Shipment Status Update - ${trackingNo}`;
         
-        const body = isNew
-            ? `Dear Customer,%0D%0A%0D%0AYour shipment has been created with the following details:%0D%0A%0D%0ATracking Number: ${trackingNo}%0D%0AStatus: ${status}%0D%0ADate & Time: ${dateTime}%0D%0ALocation: ${location || 'N/A'}%0D%0A%0D%0ATrack your shipment: ${trackingLink}%0D%0A%0D%0A${remarks ? 'Remarks: ' + remarks + '%0D%0A%0D%0A' : ''}Best regards,%0D%0AJP Logistics Team`
-            : `Dear Customer,%0D%0A%0D%0AYour shipment status has been updated:%0D%0A%0D%0ATracking Number: ${trackingNo}%0D%0ACurrent Status: ${status}%0D%0ADate & Time: ${dateTime}%0D%0ALocation: ${location || 'N/A'}%0D%0A%0D%0ATrack your shipment: ${trackingLink}%0D%0A%0D%0A${remarks ? 'Remarks: ' + remarks + '%0D%0A%0D%0A' : ''}Best regards,%0D%0AJP Logistics Team`;
+        const emailBody = isNew
+            ? `Dear Customer,\n\nYour shipment has been created with the following details:\n\nTracking Number: ${trackingNo}\nStatus: ${status}\nDate & Time: ${dateTime}\nLocation: ${location || 'N/A'}\n\nTrack your shipment: ${trackingLink}\n\n${remarks ? 'Remarks: ' + remarks + '\n\n' : ''}Best regards,\nJP Logistics Team`
+            : `Dear Customer,\n\nYour shipment status has been updated:\n\nTracking Number: ${trackingNo}\nCurrent Status: ${status}\nDate & Time: ${dateTime}\nLocation: ${location || 'N/A'}\n\nTrack your shipment: ${trackingLink}\n\n${remarks ? 'Remarks: ' + remarks + '\n\n' : ''}Best regards,\nJP Logistics Team`;
 
+        // Try EmailJS first if configured
+        const emailConfig = window.emailJSConfig || {};
+        if (emailConfig.serviceId && emailConfig.templateId && emailConfig.publicKey && typeof emailjs !== 'undefined') {
+            try {
+                // Initialize EmailJS
+                emailjs.init(emailConfig.publicKey);
+                
+                // Send to sender
+                await emailjs.send(
+                    emailConfig.serviceId,
+                    emailConfig.templateId,
+                    {
+                        to_email: senderEmail,
+                        to_name: senderEmail.split('@')[0],
+                        from_email: emailConfig.fromEmail || 'info@ssdtechnicianlab.com',
+                        from_name: emailConfig.fromName || 'JP Logistics',
+                        subject: subject,
+                        message: emailBody,
+                        tracking_number: trackingNo,
+                        tracking_link: trackingLink
+                    }
+                );
+                console.log('Email sent to sender:', senderEmail);
+                
+                // Send to receiver
+                await emailjs.send(
+                    emailConfig.serviceId,
+                    emailConfig.templateId,
+                    {
+                        to_email: receiverEmail,
+                        to_name: receiverEmail.split('@')[0],
+                        from_email: emailConfig.fromEmail || 'info@ssdtechnicianlab.com',
+                        from_name: emailConfig.fromName || 'JP Logistics',
+                        subject: subject,
+                        message: emailBody,
+                        tracking_number: trackingNo,
+                        tracking_link: trackingLink
+                    }
+                );
+                console.log('Email sent to receiver:', receiverEmail);
+                return true;
+            } catch (error) {
+                console.error('EmailJS error:', error);
+                // Fallback to mailto if EmailJS fails
+                fallbackToMailto(senderEmail, receiverEmail, subject, emailBody);
+                return false;
+            }
+        } else {
+            // Fallback to mailto if EmailJS not configured
+            fallbackToMailto(senderEmail, receiverEmail, subject, emailBody);
+            return false;
+        }
+    }
+
+    function fallbackToMailto(senderEmail, receiverEmail, subject, body) {
+        // Fallback to mailto links if EmailJS not configured
+        const mailtoBody = body.replace(/\n/g, '%0D%0A');
         setTimeout(() => {
-            window.open(`mailto:${encodeURIComponent(senderEmail)}?subject=${encodeURIComponent(subject)}&body=${body}`);
+            window.open(`mailto:${encodeURIComponent(senderEmail)}?subject=${encodeURIComponent(subject)}&body=${mailtoBody}`);
             setTimeout(() => {
-                window.open(`mailto:${encodeURIComponent(receiverEmail)}?subject=${encodeURIComponent(subject)}&body=${body}`);
+                window.open(`mailto:${encodeURIComponent(receiverEmail)}?subject=${encodeURIComponent(subject)}&body=${mailtoBody}`);
             }, 300);
         }, 100);
     }
@@ -233,6 +290,8 @@ if (statsSection) {
         
         document.getElementById('status').value = editShipment ? editShipment.status : 'Pending';
         document.getElementById('cargo-type').value = editShipment ? (editShipment.cargoType || '') : '';
+        document.getElementById('mode-of-shipment').value = editShipment ? (editShipment.modeOfShipment || '') : '';
+        document.getElementById('payment-method').value = editShipment ? (editShipment.paymentMethod || '') : '';
         document.getElementById('location').value = editShipment ? (editShipment.location || '') : '';
         document.getElementById('carrier-ref').value = editShipment ? (editShipment.carrierRef || '') : '';
         
@@ -333,6 +392,8 @@ if (statsSection) {
             let trackingNo = get('tracking-no');
             const status = get('status');
             const cargoType = get('cargo-type');
+            const modeOfShipment = get('mode-of-shipment');
+            const paymentMethod = get('payment-method');
             const statusDate = get('status-date');
             const statusTime = get('status-time');
             const location = get('location');
@@ -375,7 +436,7 @@ if (statsSection) {
                     }
                 }
             }
-            if (!status || !cargoType || !statusDate || !statusTime || !location || !origin || !destination) {
+            if (!status || !cargoType || !modeOfShipment || !paymentMethod || !statusDate || !statusTime || !location || !origin || !destination) {
                 alert('Please fill all required fields.');
                 return;
             }
@@ -408,6 +469,8 @@ if (statsSection) {
                         receiver,
                         status,
                         cargoType,
+                        modeOfShipment,
+                        paymentMethod,
                         statusDate,
                         statusTime,
                         location,
@@ -437,6 +500,8 @@ if (statsSection) {
                             receiver,
                             status,
                             cargoType,
+                            modeOfShipment,
+                            paymentMethod,
                             statusDate,
                             statusTime,
                             location,
@@ -462,6 +527,8 @@ if (statsSection) {
                     receiver,
                     status,
                     cargoType,
+                    modeOfShipment,
+                    paymentMethod,
                     statusDate,
                     statusTime,
                     location,
@@ -520,12 +587,29 @@ if (statsSection) {
                     statusTime, 
                     remarks, 
                     isNew
-                );
-                setTimeout(() => {
-                    alert(isNew 
-                        ? 'Shipment created! Email notifications sent to shipper and receiver.' 
-                        : 'Status updated! Email notifications sent to shipper and receiver.');
-                }, 1000);
+                ).then((success) => {
+                    if (success) {
+                        setTimeout(() => {
+                            alert(isNew 
+                                ? 'Shipment created! Email notifications sent automatically to shipper and receiver.' 
+                                : 'Status updated! Email notifications sent automatically to shipper and receiver.');
+                        }, 500);
+                    } else {
+                        // Fallback message if using mailto
+                        setTimeout(() => {
+                            alert(isNew 
+                                ? 'Shipment created! Please check your email client to send notifications.' 
+                                : 'Status updated! Please check your email client to send notifications.');
+                        }, 500);
+                    }
+                }).catch((err) => {
+                    console.error('Email sending error:', err);
+                    setTimeout(() => {
+                        alert(isNew 
+                            ? 'Shipment created! Email sending failed - please check EmailJS configuration.' 
+                            : 'Status updated! Email sending failed - please check EmailJS configuration.');
+                    }, 500);
+                });
             } else {
                 // Still show success message even if status didn't change
                 setTimeout(() => {
@@ -739,6 +823,25 @@ if (statsSection) {
         const state = { search: '', status: '', sort: 'updatedAt:desc', page: 0, runtimeShipments: null };
         bindEvents(state);
 
+        // Sign out when leaving the admin page (closing tab, navigating away, or refreshing)
+        // This ensures login is required every time admin accesses the page
+        if (useFirebase && window.DB) {
+            window.addEventListener('beforeunload', () => {
+                if (window.DB && window.DB.signOut) {
+                    window.DB.signOut().catch(() => {});
+                }
+            });
+            
+            // Also sign out on page visibility change (tab switch) for extra security
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && window.DB && window.DB.signOut) {
+                    // Optional: sign out when tab becomes hidden
+                    // Uncomment the line below if you want to sign out even when switching tabs
+                    // window.DB.signOut().catch(() => {});
+                }
+            });
+        }
+
         // Auth gate
         const authGate = document.getElementById('auth-gate');
         const authForm = document.getElementById('auth-form');
@@ -825,15 +928,20 @@ if (statsSection) {
     // Tracking page logic
     async function findByTracking(trackingNo) {
         const useFirebase = !!(window.DB && DB.hasFirebaseConfig);
-        if (useFirebase) {
+        if (useFirebase && window.DB) {
             try {
                 const initRes = DB.init();
                 if (initRes.ready) {
                     const doc = await DB.findShipmentByTracking(trackingNo);
                     return doc;
+                } else {
+                    console.warn('Firebase not ready, falling back to local storage');
                 }
-            } catch (_) {}
+            } catch (err) {
+                console.error('Firebase error in findByTracking:', err);
+            }
         }
+        // Fallback to local storage
         const all = readStore();
         return all.find(s => (s.trackingNo || '').toLowerCase() === trackingNo.toLowerCase());
     }
@@ -951,31 +1059,87 @@ if (statsSection) {
         const input = document.getElementById('trackingNumber');
         const result = document.getElementById('trackingResult');
         if (!form || !input || !result) return;
-        // If no Firebase config, seed local store for demo
-        if (!(window.DB && DB.hasFirebaseConfig)) {
-            seedIfEmpty();
+        
+        // Wait for Firebase to be ready if configured
+        function waitForFirebase(callback) {
+            if (window.DB && DB.hasFirebaseConfig) {
+                // Check if Firebase SDKs are loaded
+                if (typeof firebase === 'undefined' || !firebase.firestore) {
+                    // Wait for Firebase SDKs to load
+                    let attempts = 0;
+                    const checkFirebase = setInterval(() => {
+                        attempts++;
+                        if (typeof firebase !== 'undefined' && firebase.firestore) {
+                            clearInterval(checkFirebase);
+                            try {
+                                DB.init();
+                                callback();
+                            } catch (err) {
+                                console.error('Firebase init error:', err);
+                                callback();
+                            }
+                        } else if (attempts > 50) {
+                            // Give up after 5 seconds
+                            clearInterval(checkFirebase);
+                            console.warn('Firebase SDKs not loaded, using local storage');
+                            callback();
+                        }
+                    }, 100);
+                } else {
+                    try {
+                        DB.init();
+                        callback();
+                    } catch (err) {
+                        console.error('Firebase init error:', err);
+                        callback();
+                    }
+                }
+            } else {
+                // If no Firebase config, seed local store for demo
+                seedIfEmpty();
+                callback();
+            }
         }
 
-        // Support query param ?tn=...
-        const params = new URLSearchParams(window.location.search);
-        const tn = params.get('tn');
-        if (tn) {
-            input.value = tn;
-            Promise.resolve(findByTracking(tn)).then((doc) => {
-                renderTrackingResult(result, doc, tn);
-            });
-        }
+        // Initialize and set up form
+        waitForFirebase(() => {
+            // Support query param ?tn=...
+            const params = new URLSearchParams(window.location.search);
+            const tn = params.get('tn');
+            if (tn) {
+                input.value = tn;
+                Promise.resolve(findByTracking(tn)).then((doc) => {
+                    renderTrackingResult(result, doc, tn);
+                }).catch((err) => {
+                    console.error('Error finding tracking:', err);
+                    renderTrackingResult(result, null, tn);
+                });
+            }
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const trackingNo = input.value.trim();
-            if (!trackingNo) return;
-            Promise.resolve(findByTracking(trackingNo)).then((match) => {
-                renderTrackingResult(result, match, trackingNo);
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const trackingNo = input.value.trim();
+                if (!trackingNo) return;
+                
+                // Show loading state
+                result.innerHTML = '<div class="card rounded-2xl p-6"><p class="text-text-secondary">Searching...</p></div>';
+                
+                try {
+                    const match = await findByTracking(trackingNo);
+                    renderTrackingResult(result, match, trackingNo);
+                } catch (err) {
+                    console.error('Error finding tracking:', err);
+                    renderTrackingResult(result, null, trackingNo);
+                }
             });
         });
     }
 
     // Auto-init tracking page if present
-    document.addEventListener('DOMContentLoaded', initTrackingPage);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTrackingPage);
+    } else {
+        // DOM already loaded
+        initTrackingPage();
+    }
 })();

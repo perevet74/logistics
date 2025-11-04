@@ -14,6 +14,18 @@
         app = firebase.initializeApp(window.firebaseConfig);
         db = firebase.firestore();
         auth = firebase.auth();
+        
+        // Set persistence to SESSION so login only lasts for current browser session
+        // This means you must log in every time you access the admin page
+        // Session ends when browser tab/window is closed
+        try {
+            auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch((err) => {
+                console.warn('Could not set auth persistence:', err);
+            });
+        } catch (err) {
+            console.warn('Auth persistence setup error:', err);
+        }
+        
         return { ready: true };
     }
 

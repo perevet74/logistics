@@ -12,6 +12,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- EmailJS SDK for automatic email sending -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <!-- Config and DB helper -->
     <script src="firebase-config.js"></script>
     <script src="db.js"></script>
@@ -212,6 +214,24 @@
                         <option>Medical Supplies</option>
                         <option>Machinery</option>
                         <option>Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-text-secondary mb-1">Mode of Shipment</label>
+                    <select id="mode-of-shipment" required class="w-full form-input rounded-lg px-3 py-2">
+                        <option value="">Select Mode</option>
+                        <option>Land</option>
+                        <option>Air</option>
+                        <option>Sea</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-text-secondary mb-1">Payment Method</label>
+                    <select id="payment-method" required class="w-full form-input rounded-lg px-3 py-2">
+                        <option value="">Select Payment Method</option>
+                        <option>Card</option>
+                        <option>Cheque</option>
+                        <option>Crypto</option>
                     </select>
                 </div>
                 <div>
