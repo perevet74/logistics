@@ -731,20 +731,25 @@ if (statsSection) {
         const authGate = document.getElementById('auth-gate');
         const authForm = document.getElementById('auth-form');
         const authError = document.getElementById('auth-error');
+        const statusEl = document.getElementById('realtime-status');
         if (useFirebase && window.DB) {
             const initRes = DB.init();
             if (!initRes.ready) {
                 // Fallback to local storage
+                if (statusEl) statusEl.textContent = 'Status: local mode (not connected)';
                 seedIfEmpty();
                 renderTable(state);
                 return;
             }
+            if (statusEl) statusEl.textContent = 'Status: connected (awaiting sign-in)';
             DB.onAuth(async (user) => {
                 const allowed = DB.isAllowedUser(user);
                 if (!user || !allowed) {
                     if (authGate) authGate.classList.remove('hidden');
+                    if (statusEl) statusEl.textContent = 'Status: connected (sign-in required)';
                 } else {
                     if (authGate) authGate.classList.add('hidden');
+                    if (statusEl) statusEl.textContent = 'Status: connected (realtime)';
                 }
                 if (user && allowed) {
                     // Subscribe to realtime shipments
@@ -773,11 +778,13 @@ if (statsSection) {
                             authError.textContent = err.message || 'Sign-in failed';
                             authError.classList.remove('hidden');
                         }
+                        if (statusEl) statusEl.textContent = 'Status: connected (sign-in error)';
                     }
                 });
             }
         } else {
             // Local-only fallback
+            if (statusEl) statusEl.textContent = 'Status: local mode (no Firebase config)';
             seedIfEmpty();
             renderTable(state);
         }
@@ -834,32 +841,90 @@ if (statsSection) {
             return;
         }
 
-        const lastUpdated = formatDate(shipment.updatedAt);
+        const lastUpdated = shipment.updatedAt ? formatDate(shipment.updatedAt) : '—';
         const note = shipment.notes ? shipment.notes : '—';
+        const statusDate = shipment.statusDate || '—';
+        const statusTime = shipment.statusTime || '—';
+        const location = shipment.location || '—';
+        const cargoType = shipment.cargoType || '—';
+        const carrierRef = shipment.carrierRef || '—';
+        const departureDate = shipment.departureDate || '—';
+        const departureTime = shipment.departureTime || '—';
+        const comments = shipment.comments || '—';
+        const featuredImage = shipment.featuredImage || '';
+        const sender = shipment.sender || {};
+        const receiver = shipment.receiver || {};
+        const senderStreet = sender.street || '—';
+        const receiverStreet = receiver.street || '—';
+        const senderPostal = sender.postal || '—';
+        const receiverPostal = receiver.postal || '—';
+
         container.innerHTML = `
             <div class="grid gap-6">
                 <div class="card rounded-2xl p-6">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                            <h3 class="text-xl font-bold text-white">Tracking: ${shipment.trackingNo}</h3>
-                            <p class="text-text-secondary text-sm">Route: ${shipment.origin} → ${shipment.destination}</p>
+                            <h3 class="text-xl font-bold text-white">Tracking: ${shipment.trackingNo || '—'}</h3>
+                            <p class="text-text-secondary text-sm">Route: ${shipment.origin || '—'} → ${shipment.destination || '—'}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="px-3 py-1 rounded-full text-sm bg-indigo-600 text-white">${shipment.status}</span>
+                            <span class="px-3 py-1 rounded-full text-sm bg-indigo-600 text-white">${shipment.status || '—'}</span>
                             <span class="text-xs text-text-secondary">Updated: ${lastUpdated}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${featuredImage ? `
+                <div class="card rounded-2xl p-0 overflow-hidden">
+                    <img src="${featuredImage}" alt="Shipment" class="w-full max-h-96 object-cover" />
+                </div>
+                ` : ''}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card rounded-2xl p-6">
+                        <h4 class="text-white font-semibold mb-3">Current Status</h4>
+                        <dl class="grid grid-cols-1 gap-2 text-sm">
+                            <div class="flex items-center justify-between"><dt class="text-text-secondary">Status</dt><dd class="text-white">${shipment.status || '—'}</dd></div>
+                            <div class="flex items-center justify-between"><dt class="text-text-secondary">Status Date</dt><dd class="text-white">${statusDate}</dd></div>
+                            <div class="flex items-center justify-between"><dt class="text-text-secondary">Status Time</dt><dd class="text-white">${statusTime}</dd></div>
+                            <div class="flex items-center justify-between"><dt class="text-text-secondary">Location</dt><dd class="text-white">${location}</dd></div>
+                        </dl>
+                        <div class="mt-3">
+                            <h5 class="text-white font-semibold mb-1">Notes / Current Location</h5>
+                            <p class="text-text-secondary text-sm">${note}</p>
+                        </div>
+                    </div>
+                    <div class="card rounded-2xl p-6">
+                        <h4 class="text-white font-semibold mb-3">Shipment Details</h4>
+                        <dl class="grid grid-cols-1 gap-2 text-sm">
+                            <div class="flex items-center justify-between"><dt class="text-text-secondary">Cargo Type</dt><dd class="text-white">${cargoType}</dd></div>
+                            <div class="flex items-center justify-between"><dt class="text-text-secondary">Carrier Ref</dt><dd class="text-white">${carrierRef}</dd></div>
+                            <div class="flex items-center justify-between"><dt class="text-text-secondary">Departure Date</dt><dd class="text-white">${departureDate}</dd></div>
+                            <div class="flex items-center justify-between"><dt class="text-text-secondary">Departure Time</dt><dd class="text-white">${departureTime}</dd></div>
+                        </dl>
+                        <div class="mt-3">
+                            <h5 class="text-white font-semibold mb-1">Comments</h5>
+                            <p class="text-text-secondary text-sm">${comments}</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="card rounded-2xl p-6">
-                        <h4 class="text-white font-semibold mb-2">Current Note / Location</h4>
-                        <p class="text-text-secondary text-sm">${note}</p>
+                        <h4 class="text-white font-semibold mb-2">Sender</h4>
+                        <p class="text-text-secondary text-sm">${sender.name || '—'}</p>
+                        <p class="text-text-secondary text-sm">${sender.email || '—'}</p>
+                        <p class="text-text-secondary text-sm">${sender.phone || '—'}</p>
+                        <p class="text-text-secondary text-sm">${senderStreet}</p>
+                        <p class="text-text-secondary text-sm">${sender.city || '—'}, ${sender.state || '—'}, ${sender.country || '—'} ${senderPostal}</p>
                     </div>
                     <div class="card rounded-2xl p-6">
                         <h4 class="text-white font-semibold mb-2">Receiver</h4>
-                        <p class="text-text-secondary text-sm">${shipment.receiver.name}</p>
-                        <p class="text-text-secondary text-sm">${shipment.receiver.city}, ${shipment.receiver.state}, ${shipment.receiver.country}</p>
+                        <p class="text-text-secondary text-sm">${receiver.name || '—'}</p>
+                        <p class="text-text-secondary text-sm">${receiver.email || '—'}</p>
+                        <p class="text-text-secondary text-sm">${receiver.phone || '—'}</p>
+                        <p class="text-text-secondary text-sm">${receiverStreet}</p>
+                        <p class="text-text-secondary text-sm">${receiver.city || '—'}, ${receiver.state || '—'}, ${receiver.country || '—'} ${receiverPostal}</p>
                     </div>
                 </div>
             </div>
