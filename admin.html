@@ -220,6 +220,27 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block text-sm text-text-secondary mb-1">Cargo Weight</label>
+                    <div class="flex">
+                        <select id="cargo-weight-unit" class="form-input rounded-l-lg px-3 py-2 w-32">
+                            <option value="kg">Kilograms (kg)</option>
+                            <option value="lb">Pounds (lb)</option>
+                            <option value="g">Grams (g)</option>
+                            <option value="oz">Ounces (oz)</option>
+                        </select>
+                        <input id="cargo-weight-value" type="number" min="0" step="0.01" class="w-full form-input rounded-r-lg px-3 py-2" placeholder="e.g. 12.50" />
+                    </div>
+                    <p class="text-xs text-text-secondary mt-1">Optional. Provide weight and unit.</p>
+                </div>
+                <div>
+                    <label class="block text-sm text-text-secondary mb-1">Shipment Title</label>
+                    <input id="shipment-title" required class="w-full form-input rounded-lg px-3 py-2" placeholder="e.g. Urgent Electronics Delivery" />
+                </div>
+                <div>
+                    <label class="block text-sm text-text-secondary mb-1">Cargo Name</label>
+                    <input id="cargo-name" required class="w-full form-input rounded-lg px-3 py-2" placeholder="e.g. iPhone 15 Pro Max" />
+                </div>
+                <div>
                     <label class="block text-sm text-text-secondary mb-1">Mode of Shipment</label>
                     <select id="mode-of-shipment" required class="w-full form-input rounded-lg px-3 py-2">
                         <option value="">Select Mode</option>
@@ -359,6 +380,53 @@
                     <button type="button" id="modal-cancel" class="bg-gray-700/60 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-700">Cancel</button>
                     <button type="submit" id="submit-btn" class="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700">Add Shipment</button>
             </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Edit Modal -->
+    <div id="quick-edit-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-gray-800 rounded-2xl w-full max-w-xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+                <h3 id="quick-modal-title" class="text-lg font-bold text-white">Quick Edit</h3>
+                <button type="button" id="quick-modal-close" class="text-text-secondary hover:text-white p-1">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <form id="quick-edit-form" class="px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="quick-shipment-id" />
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-text-secondary mb-1">Status</label>
+                    <select id="quick-status" required class="w-full form-input rounded-lg px-3 py-2">
+                        <option>Pending</option>
+                        <option>Shipped</option>
+                        <option>In Transit</option>
+                        <option>Out for Delivery</option>
+                        <option>Delivered</option>
+                        <option>Delayed</option>
+                        <option>Exception</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-text-secondary mb-1">Status Date</label>
+                    <input id="quick-status-date" type="date" required class="w-full form-input rounded-lg px-3 py-2" />
+                </div>
+                <div>
+                    <label class="block text-sm text-text-secondary mb-1">Time</label>
+                    <input id="quick-status-time" type="time" required class="w-full form-input rounded-lg px-3 py-2" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-text-secondary mb-1">Current Location</label>
+                    <input id="quick-location" required class="w-full form-input rounded-lg px-3 py-2" placeholder="e.g. Warehouse, Frankfurt" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-text-secondary mb-1">Notes / Current Location</label>
+                    <textarea id="quick-notes" rows="2" class="w-full form-input rounded-lg px-3 py-2" placeholder="Optional"></textarea>
+                </div>
+                <div class="md:col-span-2 flex items-center justify-end gap-3 pt-2">
+                    <button type="button" id="quick-modal-cancel" class="bg-gray-700/60 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-700">Cancel</button>
+                    <button type="submit" id="quick-submit-btn" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700">Save</button>
+                </div>
             </form>
         </div>
     </div>

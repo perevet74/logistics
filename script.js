@@ -165,43 +165,43 @@ if (statsSection) {
         const emailConfig = window.emailJSConfig || {};
         if (emailConfig.serviceId && emailConfig.templateId && emailConfig.publicKey && typeof emailjs !== 'undefined') {
             try {
-                // Initialize EmailJS
-                emailjs.init(emailConfig.publicKey);
-                
-                // Send to sender
-                await emailjs.send(
-                    emailConfig.serviceId,
-                    emailConfig.templateId,
-                    {
-                        to_email: senderEmail,
-                        to_name: senderEmail.split('@')[0],
-                        from_email: emailConfig.fromEmail || 'info@ssdtechnicianlab.com',
-                        from_name: emailConfig.fromName || 'JP Logistics',
-                        subject: subject,
-                        message: emailBody,
-                        tracking_number: trackingNo,
-                        tracking_link: trackingLink
-                    }
-                );
-                console.log('Email sent to sender:', senderEmail);
-                
-                // Send to receiver
-                await emailjs.send(
-                    emailConfig.serviceId,
-                    emailConfig.templateId,
-                    {
-                        to_email: receiverEmail,
-                        to_name: receiverEmail.split('@')[0],
-                        from_email: emailConfig.fromEmail || 'info@ssdtechnicianlab.com',
-                        from_name: emailConfig.fromName || 'JP Logistics',
-                        subject: subject,
-                        message: emailBody,
-                        tracking_number: trackingNo,
-                        tracking_link: trackingLink
-                    }
-                );
-                console.log('Email sent to receiver:', receiverEmail);
-                return true;
+                // Initialize EmailJS once
+                if (!window.__emailjs_inited) {
+                    emailjs.init(emailConfig.publicKey);
+                    window.__emailjs_inited = true;
+                }
+
+                // Preferred: send ONE email to both recipients via dynamic To field
+                const combinedRecipients = `${senderEmail}, ${receiverEmail}`;
+                const templateParams = {
+                    // Common content
+                    subject: subject,
+                    message: emailBody,
+                    tracking_number: trackingNo,
+                    tracking_link: trackingLink,
+                    from_email: emailConfig.fromEmail || 'info@ssdtechnicianlab.com',
+                    from_name: emailConfig.fromName || 'JP Logistics',
+                    // Try multiple common variable names used in EmailJS templates
+                    to_email: combinedRecipients,
+                    to: combinedRecipients,
+                    reply_to: emailConfig.fromEmail || 'info@ssdtechnicianlab.com',
+                    to_name: 'Customer'
+                };
+
+                try {
+                    await emailjs.send(emailConfig.serviceId, emailConfig.templateId, templateParams);
+                    console.log('Email sent to both recipients:', combinedRecipients);
+                    return true;
+                } catch (firstErr) {
+                    console.warn('Combined send failed, attempting individual sends...', firstErr);
+                    // Fallback: send to each recipient individually
+                    const senderParams = { ...templateParams, to_email: senderEmail, to: senderEmail, to_name: senderEmail.split('@')[0] };
+                    const receiverParams = { ...templateParams, to_email: receiverEmail, to: receiverEmail, to_name: receiverEmail.split('@')[0] };
+                    await emailjs.send(emailConfig.serviceId, emailConfig.templateId, senderParams);
+                    await emailjs.send(emailConfig.serviceId, emailConfig.templateId, receiverParams);
+                    console.log('Emails sent individually to:', senderEmail, 'and', receiverEmail);
+                    return true;
+                }
             } catch (error) {
                 console.error('EmailJS error:', error);
                 console.error('EmailJS error details:', {
@@ -273,6 +273,9 @@ if (statsSection) {
                 <td class="px-6 py-3 whitespace-nowrap text-sm">${s.status}</td>
                 <td class="px-6 py-3 whitespace-nowrap text-sm">${formatDate(s.updatedAt)}</td>
                 <td class="px-6 py-3 whitespace-nowrap text-sm text-right">
+                    <button data-action="quick-edit" data-id="${s.id}" class="inline-flex items-center gap-1 text-emerald-300 hover:text-white mr-3">
+                        <i data-feather="zap" class="h-4 w-4"></i><span>Quick Edit</span>
+                    </button>
                     <button data-action="edit" data-id="${s.id}" class="inline-flex items-center gap-1 text-indigo-300 hover:text-white mr-3">
                         <i data-feather="edit-2" class="h-4 w-4"></i><span>Edit</span>
                     </button>
@@ -324,7 +327,17 @@ if (statsSection) {
         
         document.getElementById('status').value = editShipment ? editShipment.status : 'Pending';
         document.getElementById('cargo-type').value = editShipment ? (editShipment.cargoType || '') : '';
+        // New fields
+        const shipmentTitleEl = document.getElementById('shipment-title');
+        if (shipmentTitleEl) shipmentTitleEl.value = editShipment ? (editShipment.shipmentTitle || '') : '';
+        const cargoNameEl = document.getElementById('cargo-name');
+        if (cargoNameEl) cargoNameEl.value = editShipment ? (editShipment.cargoName || '') : '';
         document.getElementById('mode-of-shipment').value = editShipment ? (editShipment.modeOfShipment || '') : '';
+        // Cargo weight (optional)
+        const cwUnit = document.getElementById('cargo-weight-unit');
+        const cwValue = document.getElementById('cargo-weight-value');
+        if (cwUnit) cwUnit.value = editShipment && editShipment.cargoWeightUnit ? editShipment.cargoWeightUnit : (cwUnit.value || 'kg');
+        if (cwValue) cwValue.value = editShipment && typeof editShipment.cargoWeightValue !== 'undefined' && editShipment.cargoWeightValue !== null ? editShipment.cargoWeightValue : '';
         document.getElementById('payment-method').value = editShipment ? (editShipment.paymentMethod || '') : '';
         document.getElementById('location').value = editShipment ? (editShipment.location || '') : '';
         document.getElementById('carrier-ref').value = editShipment ? (editShipment.carrierRef || '') : '';
@@ -426,6 +439,8 @@ if (statsSection) {
             let trackingNo = get('tracking-no');
             const status = get('status');
             const cargoType = get('cargo-type');
+            const shipmentTitle = get('shipment-title');
+            const cargoName = get('cargo-name');
             const modeOfShipment = get('mode-of-shipment');
             const paymentMethod = get('payment-method');
             const statusDate = get('status-date');
@@ -435,6 +450,10 @@ if (statsSection) {
             const departureDate = get('departure-date');
             const departureTime = get('departure-time');
             const comments = get('comments');
+            // Cargo weight (optional)
+            const cargoWeightUnit = (document.getElementById('cargo-weight-unit') || { value: '' }).value;
+            const cargoWeightRaw = (document.getElementById('cargo-weight-value') || { value: '' }).value;
+            const cargoWeightValue = cargoWeightRaw ? parseFloat(cargoWeightRaw) : null;
             
             // Sender/Shipper
             const sender = {
@@ -470,8 +489,18 @@ if (statsSection) {
                     }
                 }
             }
-            if (!status || !cargoType || !modeOfShipment || !paymentMethod || !statusDate || !statusTime || !location || !origin || !destination) {
+            // Validate required fields
+            if (!status || !cargoType || !shipmentTitle || !cargoName || !modeOfShipment || !paymentMethod || !statusDate || !statusTime || !location || !origin || !destination) {
                 showNotification('Please fill all required fields.', 'error');
+                return;
+            }
+            // If one weight piece provided, require both
+            if ((cargoWeightRaw && !cargoWeightUnit) || (!cargoWeightRaw && cargoWeightUnit)) {
+                showNotification('Provide both cargo weight and unit, or leave both empty.', 'error');
+                return;
+            }
+            if (cargoWeightValue !== null && (isNaN(cargoWeightValue) || cargoWeightValue < 0)) {
+                showNotification('Cargo weight must be a non-negative number.', 'error');
                 return;
             }
 
@@ -503,6 +532,8 @@ if (statsSection) {
                         receiver,
                         status,
                         cargoType,
+                        shipmentTitle,
+                        cargoName,
                         modeOfShipment,
                         paymentMethod,
                         statusDate,
@@ -515,6 +546,8 @@ if (statsSection) {
                         origin,
                         destination,
                         notes,
+                        cargoWeightUnit: cargoWeightValue !== null ? cargoWeightUnit : null,
+                        cargoWeightValue: cargoWeightValue !== null ? cargoWeightValue : null,
                         featuredImage: featuredImage || (existing && existing.featuredImage) || null,
                         createdAt: existing ? existing.createdAt : now
                     }).then(() => {
@@ -534,6 +567,8 @@ if (statsSection) {
                             receiver,
                             status,
                             cargoType,
+                            shipmentTitle,
+                            cargoName,
                             modeOfShipment,
                             paymentMethod,
                             statusDate,
@@ -546,6 +581,8 @@ if (statsSection) {
                             origin,
                             destination,
                             notes,
+                            cargoWeightUnit: cargoWeightValue !== null ? cargoWeightUnit : store[idx].cargoWeightUnit || null,
+                            cargoWeightValue: cargoWeightValue !== null ? cargoWeightValue : store[idx].cargoWeightValue || null,
                             featuredImage: featuredImage || existingImage || null,
                             updatedAt: now
                         };
@@ -561,6 +598,8 @@ if (statsSection) {
                     receiver,
                     status,
                     cargoType,
+                    shipmentTitle,
+                    cargoName,
                     modeOfShipment,
                     paymentMethod,
                     statusDate,
@@ -573,6 +612,8 @@ if (statsSection) {
                     origin,
                     destination,
                     notes,
+                    cargoWeightUnit: cargoWeightValue !== null ? cargoWeightUnit : null,
+                    cargoWeightValue: cargoWeightValue !== null ? cargoWeightValue : null,
                     featuredImage: featuredImage || null,
                     createdAt: now,
                     updatedAt: now
@@ -607,49 +648,28 @@ if (statsSection) {
             };
             renderTable(currentState);
             
-            // Send emails on creation or status change
+            // Show success notification (email notices suppressed)
+            showNotification(
+                isNew ? 'Shipment created successfully!' : 'Shipment updated successfully!',
+                'success'
+            );
+
+            // Send emails on creation or status change (silent on dashboard)
             const statusChanged = isNew || (oldStatus && oldStatus !== status);
             if (statusChanged || isNew) {
                 const remarks = comments || notes || '';
-                // Send emails in the background (don't wait for completion)
+                // Fire and forget; no dashboard notifications
                 sendStatusEmail(
-                    sender.email, 
-                    receiver.email, 
-                    trackingNo, 
-                    status, 
-                    location, 
-                    statusDate, 
-                    statusTime, 
-                    remarks, 
+                    sender.email,
+                    receiver.email,
+                    trackingNo,
+                    status,
+                    location,
+                    statusDate,
+                    statusTime,
+                    remarks,
                     isNew
-                ).then((success) => {
-                    if (success) {
-                        showNotification(
-                            isNew 
-                                ? 'Shipment created! Email notifications sent to shipper and receiver.' 
-                                : 'Status updated! Email notifications sent to shipper and receiver.',
-                            'success'
-                        );
-                    } else {
-                        showNotification(
-                            isNew 
-                                ? 'Shipment created! Email notifications attempted (check EmailJS configuration if not received).' 
-                                : 'Status updated! Email notifications attempted (check EmailJS configuration if not received).',
-                            'success'
-                        );
-                    }
-                }).catch((err) => {
-                    console.error('Email sending error:', err);
-                    showNotification(
-                        isNew 
-                            ? 'Shipment created! Email sending failed - please check EmailJS configuration.' 
-                            : 'Status updated! Email sending failed - please check EmailJS configuration.',
-                        'error'
-                    );
-                });
-            } else {
-                // Still show success message even if status didn't change
-                showNotification('Shipment updated successfully!', 'success');
+                ).catch((err) => console.error('Email sending error:', err));
             }
         } // End proceedWithSave
     }
@@ -785,6 +805,8 @@ if (statsSection) {
             const shipment = store.find(s => s.id === id);
             if (action === 'edit' && shipment) {
                 openModal(shipment);
+            } else if (action === 'quick-edit' && shipment) {
+                openQuickEditModal(shipment);
             } else if (action === 'delete') {
                 if (usingFirebase && window.DB) {
                     DB.deleteShipment(id).then(() => {
@@ -849,6 +871,21 @@ if (statsSection) {
                 e.preventDefault();
                 upsertFromForm();
                 // Modal closing and table refresh handled inside upsertFromForm after save
+            });
+        }
+
+        // Quick edit modal bindings
+        const qModal = document.getElementById('quick-edit-modal');
+        const qClose = document.getElementById('quick-modal-close');
+        const qCancel = document.getElementById('quick-modal-cancel');
+        const qForm = document.getElementById('quick-edit-form');
+        if (qClose) qClose.addEventListener('click', (e) => { e.preventDefault(); closeQuickEditModal(); });
+        if (qCancel) qCancel.addEventListener('click', (e) => { e.preventDefault(); closeQuickEditModal(); });
+        if (qModal) qModal.addEventListener('click', (e) => { if (e.target === qModal) closeQuickEditModal(); });
+        if (qForm) {
+            qForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                upsertQuickEdit();
             });
         }
     }
@@ -978,6 +1015,111 @@ if (statsSection) {
 
     // Fallback public opener so inline onclick can trigger modal if binding fails
     window.__forceOpenModal = function () { openModal(null); };
+
+    function openQuickEditModal(shipment) {
+        const modal = document.getElementById('quick-edit-modal');
+        if (!modal) return;
+        document.getElementById('quick-shipment-id').value = shipment.id;
+        document.getElementById('quick-status').value = shipment.status || 'Pending';
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        document.getElementById('quick-status-date').value = shipment.statusDate || today;
+        document.getElementById('quick-status-time').value = shipment.statusTime || currentTime;
+        document.getElementById('quick-location').value = shipment.location || '';
+        document.getElementById('quick-notes').value = shipment.notes || '';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        try { document.documentElement.style.overflow = 'hidden'; } catch(_) {}
+    }
+
+    function closeQuickEditModal() {
+        const modal = document.getElementById('quick-edit-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        try { document.documentElement.style.overflow = ''; } catch(_) {}
+    }
+
+    function upsertQuickEdit() {
+        function get(id) { return document.getElementById(id).value.trim(); }
+        const id = get('quick-shipment-id');
+        const status = get('quick-status');
+        const statusDate = get('quick-status-date');
+        const statusTime = get('quick-status-time');
+        const location = get('quick-location');
+        const notes = get('quick-notes');
+        if (!id || !status || !statusDate || !statusTime || !location) {
+            showNotification('Please fill required fields for quick edit.', 'error');
+            return;
+        }
+        const usingFirebase = !!(window.DB && DB.hasFirebaseConfig);
+        const store = usingFirebase ? (stateCache.runtimeShipments || []) : readStore();
+        const existing = store.find(s => s.id === id);
+        if (!existing) { showNotification('Shipment not found.', 'error'); return; }
+        const now = Date.now();
+        const oldStatus = existing.status;
+
+        if (usingFirebase && window.DB) {
+            DB.updateShipment(id, {
+                ...existing,
+                id,
+                status,
+                statusDate,
+                statusTime,
+                location,
+                notes,
+                updatedAt: now
+            }).then(() => {
+                // Success notification for quick edit
+                showNotification('Shipment updated successfully!', 'success');
+            }).catch((err) => {
+                console.error('Quick update error:', err);
+                showNotification('Failed to update shipment: ' + (err.message || 'Unknown error'), 'error');
+            });
+        } else {
+            const idx = store.findIndex(s => s.id === id);
+            if (idx >= 0) {
+                store[idx] = { ...store[idx], status, statusDate, statusTime, location, notes, updatedAt: now };
+                writeStore(store);
+            }
+        }
+
+        // Close and refresh
+        closeQuickEditModal();
+        const searchInput = document.getElementById('search-input');
+        const statusFilter = document.getElementById('status-filter');
+        const sortSelect = document.getElementById('sort-select');
+        const currentState = {
+            search: searchInput ? searchInput.value : '',
+            status: statusFilter ? statusFilter.value : '',
+            sort: sortSelect ? sortSelect.value : 'updatedAt:desc',
+            page: 0,
+            runtimeShipments: stateCache.runtimeShipments || null
+        };
+        renderTable(currentState);
+
+        // Success notification for quick edit (local or Firebase)
+        showNotification('Shipment updated successfully!', 'success');
+
+        // Send email if status changed (silent)
+        const statusChanged = oldStatus && oldStatus !== status;
+        if (statusChanged) {
+            const sender = existing.sender || {};
+            const receiver = existing.receiver || {};
+            sendStatusEmail(
+                sender.email || '',
+                receiver.email || '',
+                existing.trackingNo || '',
+                status,
+                location,
+                statusDate,
+                statusTime,
+                notes || '',
+                false
+            ).catch(() => {});
+        }
+    }
 
     // Tracking page logic
     async function findByTracking(trackingNo) {
