@@ -91,6 +91,35 @@ if (statsSection) {
     const STORAGE_KEY = 'jp_shipments';
     const PAGE_SIZE = 10;
 
+    // Notification system
+    function showNotification(message, type = 'success') {
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+        
+        const notification = document.createElement('div');
+        const bgColor = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+        notification.className = `${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center justify-between gap-4 animate-slide-in`;
+        notification.innerHTML = `
+            <span class="flex-1">${message}</span>
+            <button class="text-white hover:text-gray-200" onclick="this.parentElement.remove()">
+                <i data-feather="x" class="h-4 w-4"></i>
+            </button>
+        `;
+        
+        container.appendChild(notification);
+        feather.replace();
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                notification.style.transition = 'all 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 5000);
+    }
+
     function readStore() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
@@ -175,13 +204,18 @@ if (statsSection) {
                 return true;
             } catch (error) {
                 console.error('EmailJS error:', error);
-                // Fallback to mailto if EmailJS fails
-                fallbackToMailto(senderEmail, receiverEmail, subject, emailBody);
+                console.error('EmailJS error details:', {
+                    message: error.message,
+                    text: error.text,
+                    status: error.status
+                });
+                // Don't fallback to mailto - just return false so we can show notification
                 return false;
             }
         } else {
-            // Fallback to mailto if EmailJS not configured
-            fallbackToMailto(senderEmail, receiverEmail, subject, emailBody);
+            // EmailJS not configured - log warning
+            console.warn('EmailJS not configured. Please set up emailJSConfig in firebase-config.js');
+            console.warn('Required: serviceId, templateId, publicKey');
             return false;
         }
     }
@@ -378,7 +412,7 @@ if (statsSection) {
                 proceedWithSave(e.target.result);
             };
             reader.onerror = function() {
-                alert('Error reading image file');
+                showNotification('Error reading image file', 'error');
             };
             reader.readAsDataURL(imageInput.files[0]);
             return; // Exit, will continue after image is read
@@ -431,13 +465,13 @@ if (statsSection) {
             for (const obj of [sender, receiver]) {
                 for (const key in obj) {
                     if (!obj[key]) {
-                        alert('All sender and receiver fields are required.');
+                        showNotification('All sender and receiver fields are required.', 'error');
                         return;
                     }
                 }
             }
             if (!status || !cargoType || !modeOfShipment || !paymentMethod || !statusDate || !statusTime || !location || !origin || !destination) {
-                alert('Please fill all required fields.');
+                showNotification('Please fill all required fields.', 'error');
                 return;
             }
 
@@ -487,7 +521,7 @@ if (statsSection) {
                         console.log('Shipment updated successfully in Firestore');
                     }).catch((err) => {
                         console.error('Failed to update shipment:', err);
-                        alert('Failed to update shipment: ' + (err.message || 'Unknown error'));
+                        showNotification('Failed to update shipment: ' + (err.message || 'Unknown error'), 'error');
                     });
                 } else {
                     const idx = store.findIndex(s => s.id === id);
@@ -549,7 +583,7 @@ if (statsSection) {
                         console.log('Shipment created successfully in Firestore');
                     }).catch((err) => {
                         console.error('Failed to create shipment:', err);
-                        alert('Failed to create shipment: ' + (err.message || 'Unknown error'));
+                        showNotification('Failed to create shipment: ' + (err.message || 'Unknown error'), 'error');
                     });
                 } else {
                     const next = [newRecord, ...store];
@@ -577,6 +611,7 @@ if (statsSection) {
             const statusChanged = isNew || (oldStatus && oldStatus !== status);
             if (statusChanged || isNew) {
                 const remarks = comments || notes || '';
+                // Send emails in the background (don't wait for completion)
                 sendStatusEmail(
                     sender.email, 
                     receiver.email, 
@@ -589,32 +624,32 @@ if (statsSection) {
                     isNew
                 ).then((success) => {
                     if (success) {
-                        setTimeout(() => {
-                            alert(isNew 
-                                ? 'Shipment created! Email notifications sent automatically to shipper and receiver.' 
-                                : 'Status updated! Email notifications sent automatically to shipper and receiver.');
-                        }, 500);
+                        showNotification(
+                            isNew 
+                                ? 'Shipment created! Email notifications sent to shipper and receiver.' 
+                                : 'Status updated! Email notifications sent to shipper and receiver.',
+                            'success'
+                        );
                     } else {
-                        // Fallback message if using mailto
-                        setTimeout(() => {
-                            alert(isNew 
-                                ? 'Shipment created! Please check your email client to send notifications.' 
-                                : 'Status updated! Please check your email client to send notifications.');
-                        }, 500);
+                        showNotification(
+                            isNew 
+                                ? 'Shipment created! Email notifications attempted (check EmailJS configuration if not received).' 
+                                : 'Status updated! Email notifications attempted (check EmailJS configuration if not received).',
+                            'success'
+                        );
                     }
                 }).catch((err) => {
                     console.error('Email sending error:', err);
-                    setTimeout(() => {
-                        alert(isNew 
+                    showNotification(
+                        isNew 
                             ? 'Shipment created! Email sending failed - please check EmailJS configuration.' 
-                            : 'Status updated! Email sending failed - please check EmailJS configuration.');
-                    }, 500);
+                            : 'Status updated! Email sending failed - please check EmailJS configuration.',
+                        'error'
+                    );
                 });
             } else {
                 // Still show success message even if status didn't change
-                setTimeout(() => {
-                    alert('Shipment updated successfully!');
-                }, 100);
+                showNotification('Shipment updated successfully!', 'success');
             }
         } // End proceedWithSave
     }
@@ -752,11 +787,16 @@ if (statsSection) {
                 openModal(shipment);
             } else if (action === 'delete') {
                 if (usingFirebase && window.DB) {
-                    DB.deleteShipment(id).catch(() => { alert('Failed to delete shipment.'); });
+                    DB.deleteShipment(id).then(() => {
+                        showNotification('Shipment deleted successfully!', 'success');
+                    }).catch(() => { 
+                        showNotification('Failed to delete shipment.', 'error'); 
+                    });
                 } else {
                     const next = store.filter(s => s.id !== id);
                     writeStore(next);
                     renderTable(state);
+                    showNotification('Shipment deleted successfully!', 'success');
                 }
             }
         });
@@ -847,11 +887,18 @@ if (statsSection) {
         const authForm = document.getElementById('auth-form');
         const authError = document.getElementById('auth-error');
         const statusEl = document.getElementById('realtime-status');
+        
+        // Ensure auth gate is visible initially
+        if (authGate) {
+            authGate.classList.remove('hidden');
+        }
+        
         if (useFirebase && window.DB) {
             const initRes = DB.init();
             if (!initRes.ready) {
-                // Fallback to local storage
+                // Fallback to local storage - show auth gate
                 if (statusEl) statusEl.textContent = 'Status: local mode (not connected)';
+                if (authGate) authGate.classList.remove('hidden');
                 seedIfEmpty();
                 renderTable(state);
                 return;
@@ -860,10 +907,14 @@ if (statsSection) {
             DB.onAuth(async (user) => {
                 const allowed = DB.isAllowedUser(user);
                 if (!user || !allowed) {
-                    if (authGate) authGate.classList.remove('hidden');
+                    if (authGate) {
+                        authGate.classList.remove('hidden');
+                    }
                     if (statusEl) statusEl.textContent = 'Status: connected (sign-in required)';
                 } else {
-                    if (authGate) authGate.classList.add('hidden');
+                    if (authGate) {
+                        authGate.classList.add('hidden');
+                    }
                     if (statusEl) statusEl.textContent = 'Status: connected (realtime)';
                 }
                 if (user && allowed) {
@@ -900,8 +951,11 @@ if (statsSection) {
                 });
             }
         } else {
-            // Local-only fallback
+            // Local-only fallback - skip auth for local development
             if (statusEl) statusEl.textContent = 'Status: local mode (no Firebase config)';
+            if (authGate) {
+                authGate.classList.add('hidden');
+            }
             seedIfEmpty();
             renderTable(state);
         }

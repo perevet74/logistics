@@ -21,7 +21,7 @@
 <body>
     <div class="flex" id="admin-app">
         <!-- Auth Gate -->
-        <div id="auth-gate" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50 hidden">
+        <div id="auth-gate" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
             <div class="card rounded-2xl p-6 w-full max-w-md">
                 <h2 class="text-xl font-bold text-white mb-4">Admin Sign In</h2>
                 <p class="text-text-secondary text-sm mb-4">Sign in to manage shipments.</p>
@@ -96,6 +96,9 @@
             </header>
 
             <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Notification Area -->
+                <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-md"></div>
+                
                 <!-- Page Header -->
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
                     <div>
