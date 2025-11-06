@@ -557,46 +557,46 @@ if (statsSection) {
                         showNotification('Failed to update shipment: ' + (err.message || 'Unknown error'), 'error');
                     });
                 } else {
-                    const idx = store.findIndex(s => s.id === id);
-                    if (idx >= 0) {
-                        const existingImage = store[idx].featuredImage;
-                        store[idx] = {
-                            ...store[idx],
-                            trackingNo,
-                            sender,
-                            receiver,
-                            status,
-                            cargoType,
+                const idx = store.findIndex(s => s.id === id);
+                if (idx >= 0) {
+                    const existingImage = store[idx].featuredImage;
+                    store[idx] = { 
+                        ...store[idx], 
+                        trackingNo, 
+                        sender, 
+                        receiver, 
+                        status, 
+                        cargoType,
                             shipmentTitle,
                             cargoName,
                             modeOfShipment,
                             paymentMethod,
-                            statusDate,
-                            statusTime,
-                            location,
-                            carrierRef,
-                            departureDate,
-                            departureTime,
-                            comments,
-                            origin,
-                            destination,
-                            notes,
+                        statusDate,
+                        statusTime,
+                        location,
+                        carrierRef,
+                        departureDate,
+                        departureTime,
+                        comments,
+                        origin, 
+                        destination, 
+                        notes,
                             cargoWeightUnit: cargoWeightValue !== null ? cargoWeightUnit : store[idx].cargoWeightUnit || null,
                             cargoWeightValue: cargoWeightValue !== null ? cargoWeightValue : store[idx].cargoWeightValue || null,
-                            featuredImage: featuredImage || existingImage || null,
-                            updatedAt: now
-                        };
+                        featuredImage: featuredImage || existingImage || null,
+                        updatedAt: now 
+                    };
                         writeStore(store);
                     }
                 }
             } else {
                 isNew = true;
                 const newRecord = {
-                    id: generateId(),
-                    trackingNo,
-                    sender,
-                    receiver,
-                    status,
+                    id: generateId(), 
+                    trackingNo, 
+                    sender, 
+                    receiver, 
+                    status, 
                     cargoType,
                     shipmentTitle,
                     cargoName,
@@ -609,14 +609,14 @@ if (statsSection) {
                     departureDate,
                     departureTime,
                     comments,
-                    origin,
-                    destination,
+                    origin, 
+                    destination, 
                     notes,
                     cargoWeightUnit: cargoWeightValue !== null ? cargoWeightUnit : null,
                     cargoWeightValue: cargoWeightValue !== null ? cargoWeightValue : null,
                     featuredImage: featuredImage || null,
-                    createdAt: now,
-                    updatedAt: now
+                    createdAt: now, 
+                    updatedAt: now 
                 };
                 if (usingFirebase && window.DB) {
                     console.log('Creating shipment in Firestore:', newRecord.trackingNo);
@@ -660,14 +660,14 @@ if (statsSection) {
                 const remarks = comments || notes || '';
                 // Fire and forget; no dashboard notifications
                 sendStatusEmail(
-                    sender.email,
-                    receiver.email,
-                    trackingNo,
-                    status,
-                    location,
-                    statusDate,
-                    statusTime,
-                    remarks,
+                    sender.email, 
+                    receiver.email, 
+                    trackingNo, 
+                    status, 
+                    location, 
+                    statusDate, 
+                    statusTime, 
+                    remarks, 
                     isNew
                 ).catch((err) => console.error('Email sending error:', err));
             }
@@ -699,8 +699,8 @@ if (statsSection) {
                         try {
                             const initRes = DB.init();
                             if (!initRes.ready) {
-                                writeStore(arr);
-                                onDone(true);
+                    writeStore(arr);
+                    onDone(true);
                                 return;
                             }
                         } catch (_) {}
@@ -815,9 +815,9 @@ if (statsSection) {
                         showNotification('Failed to delete shipment.', 'error'); 
                     });
                 } else {
-                    const next = store.filter(s => s.id !== id);
-                    writeStore(next);
-                    renderTable(state);
+                const next = store.filter(s => s.id !== id);
+                writeStore(next);
+                renderTable(state);
                     showNotification('Shipment deleted successfully!', 'success');
                 }
             }
@@ -937,7 +937,7 @@ if (statsSection) {
                 if (statusEl) statusEl.textContent = 'Status: local mode (not connected)';
                 if (authGate) authGate.classList.remove('hidden');
                 seedIfEmpty();
-                renderTable(state);
+        renderTable(state);
                 return;
             }
             if (statusEl) statusEl.textContent = 'Status: connected (awaiting sign-in)';
@@ -1209,7 +1209,7 @@ if (statsSection) {
                         </dl>
                         <div class="mt-3">
                             <h5 class="text-white font-semibold mb-1">Notes / Current Location</h5>
-                            <p class="text-text-secondary text-sm">${note}</p>
+                        <p class="text-text-secondary text-sm">${note}</p>
                         </div>
                     </div>
                     <div class="card rounded-2xl p-6">
@@ -1292,18 +1292,18 @@ if (statsSection) {
                 }
             } else {
                 // If no Firebase config, seed local store for demo
-                seedIfEmpty();
+        seedIfEmpty();
                 callback();
             }
         }
 
         // Initialize and set up form
         waitForFirebase(() => {
-            // Support query param ?tn=...
-            const params = new URLSearchParams(window.location.search);
-            const tn = params.get('tn');
-            if (tn) {
-                input.value = tn;
+        // Support query param ?tn=...
+        const params = new URLSearchParams(window.location.search);
+        const tn = params.get('tn');
+        if (tn) {
+            input.value = tn;
                 Promise.resolve(findByTracking(tn)).then((doc) => {
                     renderTrackingResult(result, doc, tn);
                 }).catch((err) => {
@@ -1313,16 +1313,16 @@ if (statsSection) {
             }
 
             form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const trackingNo = input.value.trim();
-                if (!trackingNo) return;
+            e.preventDefault();
+            const trackingNo = input.value.trim();
+            if (!trackingNo) return;
                 
                 // Show loading state
                 result.innerHTML = '<div class="card rounded-2xl p-6"><p class="text-text-secondary">Searching...</p></div>';
                 
                 try {
                     const match = await findByTracking(trackingNo);
-                    renderTrackingResult(result, match, trackingNo);
+            renderTrackingResult(result, match, trackingNo);
                 } catch (err) {
                     console.error('Error finding tracking:', err);
                     renderTrackingResult(result, null, trackingNo);
@@ -1333,7 +1333,7 @@ if (statsSection) {
 
     // Auto-init tracking page if present
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTrackingPage);
+    document.addEventListener('DOMContentLoaded', initTrackingPage);
     } else {
         // DOM already loaded
         initTrackingPage();
